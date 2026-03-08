@@ -17,7 +17,7 @@ Inroducing:
     *Calendar uses iCalendar API and auth method.
 
     ------------------------------------------------------------------------
-
+    
 Setup:
 
 All these steps are mandatory. If you do not follow them, serious consequences may occur for you. (You do not want to wake up and find out that all emails in your inbox are permanently deleted.)
