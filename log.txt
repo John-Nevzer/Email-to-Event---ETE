@@ -1,0 +1,34 @@
+Success! Server is now running on port 1234
+Stopped the server on port 1234.
+Program started - start time
+2026-03-08T18:00
+Resources
+Instaled  RAM: 47.916297912597656 GB
+Available RAM: 41.132171630859375 GB
+Total VRAM: 3.0 GB
+config path:
+D:\Programy\Projekty\Python\ETE\config\config.ini
+konverze na absulutní: D:\Programy\Programy\LM Studio models\lmstudio-community\gemma-3-27B-it-qat-GGUF\gemma-3-27B-it-QAT-Q4_0.gguf
+Cesty k lm studio
+D:\Programy\Programy\LM Studio\.\LM Studio.exe D:\Programy\Programy\LM Studio\.\LM Studio.exe\.\resources\app\.webpack\lms.exe
+Reading emails
+Konec naèítání zpráv.
+Zpracovávání: 1 emailù
+Emails prepared and max context seted on
+3000
+kontrola portù
+Port 1234 je obsazený, LM Studio nelze spustit.
+Spouštím LM Studio server...
+127.0.0.1:1234
+1 událostí nalezeno
+Schùzka - pozorování na praxi;Mùžete se zastavit hned první termín: ètvrtek 10:55–11:40 (4. hodina), PGM, T1.A;2026-03-11T10:55
+Event - header: Schùzka - pozorování na praxi; summary: Mùžete se zastavit hned první termín: ètvrtek 10:55–11:40 (4. hodina), PGM, T1.A; date: 2026-03-11T10:55
+Pøidávám událost: Schùzka - pozorování na praxi | 2026-03-11T10:55
+Událost úspìšnì pøidána: Schùzka - pozorování na praxi
+Program ended - in time
+2026-03-08T18:01
+Resources
+Instaled  RAM: 47.916297912597656 GB
+Available RAM: 32.78594207763672 GB
+Total VRAM: 3.0 GB
+Tasks ended. Sources is free.
