@@ -1,10 +1,10 @@
 import imaplib
 import email
 from email.header import decode_header
-import sys
-import time
 import datetime
 from dataclasses import dataclass
+import imaplib
+
 
 @dataclass
 class StructuredInput:
@@ -16,12 +16,7 @@ class StructuredInput:
     non_generic_files: bool       # True = .pdf/.doc atd., False = png/jpg
     processed: bool               # byl jiz zpracovan a zapsan true-projel LLM, false nic se snim nedelo
 
-    def __post_init__(self):
-        # ověření formátu datumu
-        try:
-            datetime.strptime(self.date_of_inbound, "%Y-%m-%dT%H:%M")
-        except ValueError:
-            raise ValueError(f"date_of_inbound musí být ve formátu YYYY-MM-DDThh:mm, dostal: {self.date_of_inbound}")
+
     def __str__(self) -> str:
         return (
         f"UID: {self.uids}\n"
@@ -33,51 +28,57 @@ class StructuredInput:
         f"Processed: {self.processed}"
         )
 
+
     def to_text_calendar(self):
-        return (f"Adresa odesílatele: {self.sender_address}\nPředmět: {self.subject}\nText: {self.body}")
+        return f"Adresa odesílatele: {self.sender_address.replace('\r\n','\n').replace('\n','')}\nPředmět: {self.subject.replace('\r\n','\n').replace('\n','')}\nText: {self.body.replace('\r\n','\n').replace('\n','')}"
 
     def to_text_autoreponce(self):
-        return (f"Adresa odesílatele: {self.sender_address}\nPředmět: {self.subject}\nText: {self.body}\nDatum doručení: {self.date_of_inbound}\nPřílohy: {self.non_generic_files}")
-
+        return f"Adresa odesílatele: {self.sender_address.replace('\r\n','\n')}\nPředmět: {self.subject.replace('\r\n','\n')}\nText: {self.body.replace('\r\n','\n')}\nDatum doručení: {self.date_of_inbound}\nPřílohy: {self.non_generic_files}"
+    
     def to_text_full(self):
-        return (f"ID: {self.uids}\nAdresa odesílatele: {self.sender_address}\nPředmět: {self.subject}\nText: {self.body}\nDatum doručení: {self.date_of_inbound}\nPřílohy: {self.non_generic_files}\nZpracováno: {self.processed}")
-
+        return f"ID: {self.uids}\nAdresa odesílatele: {self.sender_address.replace('\r\n','\n')}\nPředmět: {self.subject.replace('\r\n','\n')}\nText: {self.body.replace('\r\n','\n')}\nDatum doručení: {self.date_of_inbound}\nPřílohy: {self.non_generic_files}\nZpracováno: {self.processed}"
 
 ####################################################################
 
 
-from datetime import datetime
-import imaplib
-import email
-from email.header import decode_header
+
 
 #[b'1 (UID 12)']
 extract_uid = lambda x: x[0].decode('utf-8').split("UID ")[1].split(")")[0].strip(")'] ")
 
 def read_inbox(email_imap_server, email_SSL_port, email_user, email_pass, email_folder):
-    """
+        """
     Return list of StructuredInput objects for all emails in folder.
     UID is returned as raw string for direct server lookup.
-    """
-    emails = []
-    try:
+        """
+        emails = []
+    
         mail = imaplib.IMAP4_SSL(email_imap_server, email_SSL_port, timeout=30)
         mail.login(email_user, email_pass)
         mail.select(email_folder)
 
-        status, message_numbers = mail.search(None, "ALL")
-        if status != 'OK':
+        blob = mail.search(None, "ALL")
+        if blob[0] != 'OK':
             print("Chyba při získávání seznamu zpráv.")
             return emails
+        
+        serial_number=blob[1][0].decode().replace("']","").replace("[b'","")
+        for num in serial_number.split(" "):
 
-        for num in message_numbers[0].split():
+            msg: vars
+            msg = None
+            uid = ""
+            sender=""
+            subject = ""
+            body = ""
+            date_of_inbound=""
+            non_generic_files = False
+            procesed = False
+
             # 1. Získání UID z odpovědi serveru
             status, uid_data = mail.fetch(num, "(UID)")
             if status == 'OK':
-                    msg_uid= extract_uid(uid_data)
-
-            # Získání celé zprávy (pokud ještě nebylo)
-            if 'msg_data' not in locals():
+                uid = extract_uid(uid_data)
                 status, msg_data = mail.fetch(num, "(RFC822)")
                 if status != 'OK':
                     continue
@@ -91,15 +92,12 @@ def read_inbox(email_imap_server, email_SSL_port, email_user, email_pass, email_
                 subject = subject.decode(encoding or "utf-8", errors="ignore")
 
             # Date
-            date_str = msg.get("Date", "")
             try:
-                dt = email.utils.parsedate_to_datetime(date_str)
-                date_of_inbound = dt.strftime("%Y-%m-%dT%H:%M")
+                date_of_inbound = email.utils.parsedate_to_datetime(msg.get("Date", "")).strftime("%Y-%m-%dT%H:%M") 
             except:
-                date_of_inbound = ""
+                date_of_inbound = "0000-00-00T00:00"
 
-            # Body (plain text)
-            body = ""
+            # Body (plain text)           
             if msg.is_multipart():
                 for part in msg.walk():
                     ctype = part.get_content_type()
@@ -123,23 +121,19 @@ def read_inbox(email_imap_server, email_SSL_port, email_user, email_pass, email_
 
             # Přidání do seznamu
             emails.append(StructuredInput(
-                uids=msg_uid,
+                uids=uid,
                 sender_address=sender,
                 subject=subject,
                 body=body,
                 date_of_inbound=date_of_inbound,
                 non_generic_files=non_generic_files,
-                processed=False
+                processed=procesed
             ))
+      
 
         mail.logout()
         print("Konec načítání zpráv.")
         return emails
-
-    except Exception as e:
-        print(f"Chyba:\n{str(e)}")
-        return emails
-
 
 
 #########################################################################################
@@ -177,10 +171,11 @@ def test_read():
     """
     only read all emails and print them as structured output by class StructuredInput by .to_text_full()
     """
-    emails= read_inbox("imap.seznam.cz", "993", "ete-test@email.cz", "SJy,nht3c0*CiIqz8TSffHg0Tk*aJnnI#H","inbox")
+    emails= read_inbox("imap.seznam.cz", "993", "ete-test@email.cz", "password","test")
     for em in emails:
         print(em.to_text_full())
-
+        print("-----------------------------------------------------------------------------------------------------")
+        print("-----------------------------------------------------------------------------------------------------")
 
 def test_full():
     """
@@ -213,4 +208,4 @@ def test_full():
     
 # Spuštění testu
 #test_full()
-#test_read()
+test_read()

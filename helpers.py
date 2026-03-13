@@ -131,3 +131,41 @@ def printRAM():
 
 def printVRAM():
     print(f"Total VRAM: { get_VRAM_total() } GB")
+
+
+def date_comparer(date_str: str) -> bool:
+
+    """
+    False = date is older then curent time
+    True = date is in the future
+    """
+
+    date_str = date_str.strip()
+    # oprava např. 2025-03-00
+    date_str = re.sub(r'-(\d{2})-00T', r'-\1-01T', date_str)
+    # ISO T → mezera
+    date_str = date_str.replace("T", " ")
+    # pokud není čas
+    if " " not in date_str and len(date_str) == 10:
+        date_str += " 00:00"
+
+    formats = [
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d",
+        "%d.%m.%Y %H:%M",
+        "%d/%m/%Y %H:%M",
+    ]
+
+    dt = None
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(date_str, fmt)
+            break
+        except ValueError:
+            continue
+
+    if dt is None:
+        return False
+
+    return dt >= datetime.now()

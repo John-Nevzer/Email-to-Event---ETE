@@ -45,6 +45,8 @@ gpu_layers = 20
 keepModelInMemory = True
 offloadKVCacheToGpu = True
 
+use_old_email = False
+
 client: vars
 model: vars
 llm: vars
@@ -158,7 +160,7 @@ else:
 
 ########################################################################################################
 
-response_text: str= "NULL"
+response_text: str= "NULL*"
 if use_lm_studio_api == '1':  # Lokální Llama.cpp
     i=0
     for input in emails:
@@ -166,15 +168,14 @@ if use_lm_studio_api == '1':  # Lokální Llama.cpp
         response_text = generate_lms(input.to_text_calendar(), EVENT_EXTRACTION_PROMPT, model, float( model_temperature), float (model_topp))
         response_lines = [line.strip() for line in response_text.split("\n") if line.strip()]
         emails[i].processed=True
-        
+        print(response_text)
         print(f"{len(response_lines)} událostí nalezeno")
         for res in response_lines:
             print(res)
             response = res.split(";")
-            if len(response) == 3 and response[0] != "NULL":
-                header, summary, date = response
-                print(f"Event - header: {header}; summary: {summary}; date: {date}")
-                add_event(header, summary, date, calendar_icalendar_server, calendar_user, calendar_pass,calendar_id)
+            if len(response) == 3 and response[0] != "NULL" and (True if use_old_email else date_comparer(response[2])):
+                print("Event - header: "+response[0]+"; sumary:"+response[1]+"; date: "+response[2])
+                add_event(response[0],response[1],response[2], calendar_icalendar_server, calendar_user, calendar_pass,calendar_id)
     i=i+1
 else:
     i=0
@@ -185,7 +186,7 @@ else:
         for res in response_line:
             print(res)
             response = res.split(";")
-            if len(response) == 3 and response[0] != "NULL":
+            if len(response) == 3 and response[0] != "NULL" and (True if use_old_email else date_comparer(response[2])):
                 print(response)
                 print("Event - header: "+response[0]+"; sumary:"+response[1]+"; date: "+response[2])
                 add_event(response[0],response[1],response[2],calendar_icalendar_server, calendar_user, calendar_pass,calendar_id)
@@ -199,7 +200,7 @@ else:
 unload_llama()
 unload_lms(client, model)
 client.close()
-
+delete_processed_emails_in_folder(email_imap_server, email_SSL_port,email_user, email_pass,email_folder, emails)
 print("Program ended - in time")
 print(get_current_datetime_formatted())
 print("Resources")
