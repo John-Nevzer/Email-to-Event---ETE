@@ -208,4 +208,4 @@ def test_full():
     
 # Spuštění testu
 #test_full()
-test_read()
+#test_read()
