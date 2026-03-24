@@ -1,0 +1,8 @@
+Version rules
+
+X.0 - X main feature upgrade, big bug fix, ading new feature/functionality,  big code chung rewrite, new add library, etg
+
+
+0.X - X minor ugrade, small bug fix, documentation changes, gui changes, translations changes, etg
+
+0.0.X - not in use, for comit changes from diferent programers/developers
